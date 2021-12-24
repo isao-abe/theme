@@ -1,0 +1,45 @@
+version: '3'
+services:
+
+  # Partner側 +++++++++++++++++++++++++++++++++++++++++++++++++
+  theme-nginx:
+    image: nginx:1.7
+    container_name: "theme-nginx"
+    ports:
+      - "8080:80"
+    volumes:
+      - ../theme:/data1/home/theme
+      - ./nginx/nginx_conf/conf.d:/etc/nginx/conf.d
+      - ./nginx/nginx_log:/var/log/nginx/
+    environment:
+      - http_proxy=${HTTP_PROXY}
+      - https_proxy=${HTTP_PROXY}
+    links:
+      - theme-php:php
+    hostname: theme-nginx
+
+  theme-php:
+    image: php:7.4-fpm
+    container_name: "theme-php"
+    volumes:
+      - ../theme:/data1/home/theme
+      - ./php/php_ini:/usr/local/etc/php
+      - ./php/php_conf/docker-php-ext-upload.ini:/usr/local/etc/php/conf.d/docker-php-ext-upload.ini
+    environment:
+      - http_proxy=${HTTP_PROXY}
+      - https_proxy=${HTTP_PROXY}
+    links:
+      - theme-postgres
+    hostname: theme-php
+
+  # postgres
+  theme-postgres:
+    image: postgres:10
+    container_name: "theme-postgres"
+    environment:
+      - POSTGRES_USER=root
+      - POSTGRES_PASSWORD=root
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres/init:/docker-entrypoint-initdb.d
